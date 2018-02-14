@@ -23,6 +23,8 @@ defmodule MemoryWeb.GamesChannel do
     {:reply, {:ok, payload}, socket}
   end
 
+  #Attribution : Nat Tuck's notes
+
   def handle_in("after_click",%{"i" => i}, socket) do
     game0 = socket.assigns[:game]
     game1 = Game.after_click(game0,i)
