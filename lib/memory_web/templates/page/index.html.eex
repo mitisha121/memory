@@ -1,8 +1,15 @@
-<h1>Memory Game</h1>
+<script>
+      function getName(){
+        var input = document.getElementById("1").value;
+        var anch = document.getElementById("2");
+        var final_string = "games/" + input;
+        anch.setAttribute("href",final_string);
+      }
+</script>
+<h1>Game Name</h1>
+Enter Name: <input type="text" id="1" onchange="getName()">
+<a href="/games/" id="2"> Join a game </a>
 
-<div id="game">
-  Loading...
-</div>
 
 
 

@@ -5,8 +5,8 @@ import { Button } from 'reactstrap';
 //Attribution : https://reactjs.org/tutorial/tutorial.html
 //Attribution : https://github.com/NatTuck/memory (Starter Code)
 
-export default function run_demo(root) {
-  ReactDOM.render(<Game />, root);
+export default function run_demo(root, channel) {
+  ReactDOM.render(<Game channel={channel}/>, root);
 }
 
 function Square(props) {
@@ -32,15 +32,54 @@ function SquareVal(props){
 class Board extends React.Component {
   constructor(props) {
     super(props);
+    this.channel = props.channel;
+
+    this.channel.join().receive("ok", this.got_view.bind(this)).receive("error", resp => { console.log("Unable to join", resp); });
+    
     this.state = {
-      vals: ["a","b","h","l","b","r","q","r","h","q","l","a","r","m","r","m"],
-      squares: Array(16).fill(null),
+      vals: [],
+      squares: [],
       match: "Matched",
       click: 0,
+      flag: false,
+      m: "",
+      n: "",
     };
+  }
+
+  got_view(msg) {
+    console.log("got view", msg);
+    this.setState(msg.view);
+    var flag = msg.view.flag;
+    //var squares = msg.view.squares;
+   // var i = msg.view.m;
+   // var j = msg.view.n;
+    
+    setTimeout(()=>{
+      if(!flag){
+        this.timeout()}
+      /*  
+      if (flag && i!=j){
+        squares[i] = null;
+        squares[j] = null;
+        this.setState({
+          vals: msg.view.vals,
+          squares: squares,
+          match: msg.view.match,
+          click: msg.view.click,
+          flag: false,
+          m: -1,
+          n: -1,
+        });} */
+    },500);
   }
   
   handleClick(i){
+    this.channel.push("after_click",{i:i})
+    .receive("ok", this.got_view.bind(this));
+
+    
+    /*
     const squares = this.state.squares.slice();
     var click = this.state.click;
     click = click + 1;
@@ -79,32 +118,28 @@ class Board extends React.Component {
         
       }
       
-      setTimeout(()=>{
-        
-        if (flag){
-          squares[i] = null;
-        squares[j] = null;
-        this.setState({
-          vals: this.state.vals,
-          squares: squares,
-          match: this.state.match,
-          click: click,
-        });}
-      },500);
+      
       /*this.setState({
         vals: this.state.vals,
         squares: squares,
         match: this.state.match,
         click: click,
-      }); */
-    }
+      }); 
+    }*/
       
   } 
+  newView(msg){
+    this.setState(msg.view);
+  }
+  timeout(){
+    this.channel.push("timeout",{})
+    .receive("ok", this.newView.bind(this));
+  }
     
   
 
   resetGame(){
-    const squares = this.state.squares;
+    /*const squares = this.state.squares;
     for(var i = 0; i<16 ; i++){
       this.state.squares[i]=null;
     }
@@ -114,7 +149,9 @@ class Board extends React.Component {
       squares: squares,
       match: this.state.match,
       click: clicks,
-    });
+    }); */
+    this.channel.push("restart",{})
+    .receive("ok", this.newView.bind(this));
   }
 
   renderSquare(i) {
@@ -167,11 +204,15 @@ class Board extends React.Component {
 }
 
 class Game extends React.Component {
+  constructor(props){
+    super(props);
+    this.channel = props.channel;
+  }
   render() {
     return (
       <div className="game">
         <div className="game-board">
-          <Board />
+          <Board channel={this.channel}/>
         </div>
         <div className="game-info">
           <div>{/* status */}</div>
